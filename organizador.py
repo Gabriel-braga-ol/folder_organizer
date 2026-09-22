@@ -1,14 +1,11 @@
-import os
 from pathlib import Path
 
-# Define o caminha da pasta
-caminho = Path.home() / "Downloads"
-
-# Percorre os itens diretamente dentro da pasta Downloads
-for item in caminho.iterdir():
-    if item.is_file(): 
-        extensao = item.suffix.lower()
-        
+EXTENSOES_TEMPORARIAS = (
+    '.crdownload', 
+    '.part',
+    '.tmp',
+    '.download',
+)
 
 def encontrar_categoria(extensao):
 
@@ -31,21 +28,31 @@ def encontrar_categoria(extensao):
     return "Outros"
 
 def organizar_arquivo(arquivo, pasta_principal):
-    if arquivo.is_file():
-        extensao_arquivo = arquivo.suffix.lower()
+    if not arquivo.is_file():
+        return None
+    
+    extensao_arquivo = arquivo.suffix.lower()
 
-        categoria = encontrar_categoria(extensao_arquivo)
+    if extensao_arquivo in EXTENSOES_TEMPORARIAS:
+        return None
+    
+    categoria = encontrar_categoria(extensao_arquivo)
 
-        pasta_destino = pasta_principal / categoria
+    pasta_destino = pasta_principal / categoria
 
+    try:
         pasta_destino.mkdir(parents=True, exist_ok=True)
-
         caminho_final = pasta_destino / arquivo.name
-
         caminho_disponivel = gerar_caminho_disponivel(caminho_final)
-        
         arquivo.rename(caminho_disponivel)
 
+        return caminho_disponivel
+
+    except OSError as erro:
+        print(f"Não foi possível organizar {arquivo.name}: {erro}")
+        return None
+
+        
 def gerar_caminho_disponivel(caminho):
     if not caminho.exists():
         return caminho
